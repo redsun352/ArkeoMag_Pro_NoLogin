@@ -13,11 +13,9 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 8.7
       - name: Build Debug APK
         run: gradle assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: ArkeoMag-v6-debug-apk
+          name: ArkeoMag-v8-video-apk
           path: app/build/outputs/apk/debug/*.apk
