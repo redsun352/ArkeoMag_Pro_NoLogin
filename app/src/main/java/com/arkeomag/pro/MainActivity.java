@@ -7,6 +7,7 @@ import android.content.*;
 import android.content.pm.PackageManager;
 import android.bluetooth.*;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.view.*;
 import android.widget.*;
 import java.io.*;
@@ -18,13 +19,14 @@ import com.lugatek.thubanlodestar.widgets.opengl.*;
 public class MainActivity extends Activity implements SensorHub.Listener {
     private SensorHub hub;
     private LinearLayout root, content, bottomNav;
-    private TextView title, sensorBar, pageTitle, values, gpsText;
+    private TextView title, sensorBar, pageTitle, values;
     private LineGraphView line;
     private ColumnGraphView columns;
     private ModelSurfaceView model;
     private GaugeCalibration gauge;
     private HeatMapView heat;
     private SonarRadarView sonar;
+    private TargetGaugeView targetGauge;
     private final ArrayList<String> csv = new ArrayList<>();
     private int screen = 0;
 
@@ -62,10 +64,12 @@ public class MainActivity extends Activity implements SensorHub.Listener {
 
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.VERTICAL);
-        header.setPadding(Utils.dp(this, 8), 0, Utils.dp(this, 8), Utils.dp(this, 6));
+        header.setPadding(Utils.dp(this, 12), Utils.dp(this, 2), Utils.dp(this, 12), Utils.dp(this, 8));
         header.setBackgroundColor(Color.rgb(8, 13, 20));
         title = Utils.title(this, "ArkeoMag Pro Classic");
+        title.setTextSize(24);
         sensorBar = Utils.tv(this, "Sensör bekleniyor...", 13, Utils.muted);
+        sensorBar.setSingleLine(false);
         header.addView(title);
         header.addView(sensorBar);
         root.addView(header);
@@ -77,17 +81,21 @@ public class MainActivity extends Activity implements SensorHub.Listener {
         sc.addView(content);
         root.addView(sc, new LinearLayout.LayoutParams(-1, 0, 1));
 
+        HorizontalScrollView hsv = new HorizontalScrollView(this);
+        hsv.setHorizontalScrollBarEnabled(false);
+        hsv.setFillViewport(false);
+        hsv.setBackgroundColor(Color.rgb(8, 13, 20));
         bottomNav = new LinearLayout(this);
         bottomNav.setOrientation(LinearLayout.HORIZONTAL);
-        bottomNav.setPadding(Utils.dp(this, 4), Utils.dp(this, 4), Utils.dp(this, 4), Utils.dp(this, 4));
-        bottomNav.setBackgroundColor(Color.rgb(8, 13, 20));
-        root.addView(bottomNav, new LinearLayout.LayoutParams(-1, Utils.dp(this, 64)));
+        bottomNav.setPadding(Utils.dp(this, 8), Utils.dp(this, 6), Utils.dp(this, 8), Utils.dp(this, 6));
+        hsv.addView(bottomNav);
+        root.addView(hsv, new LinearLayout.LayoutParams(-1, Utils.dp(this, 72)));
         for (int i = 0; i < tabs.length; i++) {
             final int k = i;
             TextView b = Utils.chip(this, tabs[i]);
             b.setOnClickListener(v -> navigate(k));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1);
-            lp.setMargins(Utils.dp(this, 2), 0, Utils.dp(this, 2), 0);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Utils.dp(this, 112), -1);
+            lp.setMargins(Utils.dp(this, 4), 0, Utils.dp(this, 4), 0);
             bottomNav.addView(b, lp);
         }
         setContentView(root);
@@ -107,26 +115,8 @@ public class MainActivity extends Activity implements SensorHub.Listener {
     private void clear(String t) {
         content.removeAllViews();
         pageTitle = Utils.title(this, t);
+        pageTitle.setTextSize(27);
         content.addView(pageTitle);
-    }
-
-    private void showMenu() {
-        clear("Ana Menü");
-        LinearLayout hero = Utils.card(this);
-        TextView h = Utils.tv(this, "No-Login Classic Port", 18, Utils.cyan);
-        h.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        hero.addView(h);
-        hero.addView(Utils.tv(this, "Eski APK düzenine yakın menü, canlı sensör ve tarama ekranları.", 14, Utils.muted));
-        content.addView(hero, cardLp());
-
-        String[] names = {"Dedektör", "Kalibrasyon", "Live Scan", "Area Scan", "Sonar / 3D", "Bluetooth", "CSV Kaydet", "Taban Sıfırla"};
-        String[] desc = {"Canlı manyetik anomali", "XY / YZ / XZ sensör kalibrasyonu", "Hareketli çizgi ve yüzey", "Grid / ısı haritası", "Radar halkaları ve hedefler", "Eşleşmiş cihazlar", "Ölçüm dosyası oluştur", "Anlık alanı referans al"};
-        for (int i = 0; i < names.length; i += 2) {
-            LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL);
-            row.addView(menuCard(names[i], desc[i], i), new LinearLayout.LayoutParams(0, Utils.dp(this, 120), 1));
-            if (i + 1 < names.length) row.addView(menuCard(names[i+1], desc[i+1], i+1), new LinearLayout.LayoutParams(0, Utils.dp(this, 120), 1));
-            content.addView(row);
-        }
     }
 
     private LinearLayout.LayoutParams cardLp() {
@@ -135,18 +125,57 @@ public class MainActivity extends Activity implements SensorHub.Listener {
         return lp;
     }
 
-    private View menuCard(String name, String desc, int index) {
+    private LinearLayout statusRow() {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        String[] labs = {"SENSÖR", "GPS", "BT"};
+        String[] vals = {"AKTİF", "BEKLENİYOR", "HAZIR"};
+        int[] cols = {Utils.green, Utils.yellow, Utils.cyan};
+        for (int i=0;i<3;i++) {
+            LinearLayout c = Utils.miniCard(this);
+            TextView a = Utils.tv(this, labs[i], 10, Utils.muted); a.setTypeface(Typeface.DEFAULT_BOLD);
+            TextView b = Utils.tv(this, vals[i], 13, cols[i]); b.setTypeface(Typeface.DEFAULT_BOLD);
+            c.addView(a); c.addView(b);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, Utils.dp(this, 66), 1);
+            lp.setMargins(Utils.dp(this, 3), Utils.dp(this, 3), Utils.dp(this, 3), Utils.dp(this, 3));
+            row.addView(c, lp);
+        }
+        return row;
+    }
+
+    private void showMenu() {
+        clear("Ana Menü");
+        content.addView(statusRow());
+        LinearLayout hero = Utils.card(this);
+        TextView h = Utils.tv(this, "No-Login Classic Port v5", 19, Utils.cyan);
+        h.setTypeface(Typeface.DEFAULT_BOLD);
+        hero.addView(h);
+        hero.addView(Utils.tv(this, "Eski APK görünümüne yakın kart menü, radar, heatmap, grafik ve 3D yüzey ekranları.", 14, Utils.muted));
+        content.addView(hero, cardLp());
+
+        String[] names = {"Dedektör", "Kalibrasyon", "Live Scan", "Area Scan", "Sonar / 3D", "Bluetooth", "CSV Kaydet", "Taban Sıfırla"};
+        String[] desc = {"Canlı manyetik anomali", "XY / YZ / XZ sensör kalibrasyonu", "Çizgi + 3D yüzey", "Grid / ısı haritası", "Radar halkaları ve hedefler", "Eşleşmiş cihazlar", "Ölçüm dosyası oluştur", "Anlık alanı referans al"};
+        String[] icon = {"📡", "◎", "〽", "▦", "◉", "BT", "CSV", "0"};
+        for (int i = 0; i < names.length; i += 2) {
+            LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL);
+            row.addView(menuCard(icon[i], names[i], desc[i], i), new LinearLayout.LayoutParams(0, Utils.dp(this, 128), 1));
+            if (i + 1 < names.length) row.addView(menuCard(icon[i+1], names[i+1], desc[i+1], i+1), new LinearLayout.LayoutParams(0, Utils.dp(this, 128), 1));
+            content.addView(row);
+        }
+    }
+
+    private View menuCard(String icon, String name, String desc, int index) {
         LinearLayout c = Utils.card(this);
-        LinearLayout.LayoutParams mlp = (LinearLayout.LayoutParams)c.getLayoutParams();
-        TextView n = Utils.tv(this, name, 18, Utils.txt); n.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        TextView ic = Utils.tv(this, icon, 18, Utils.cyan); ic.setTypeface(Typeface.DEFAULT_BOLD);
+        TextView n = Utils.tv(this, name, 18, Utils.txt); n.setTypeface(Typeface.DEFAULT_BOLD);
         TextView d = Utils.tv(this, desc, 12, Utils.muted);
-        c.addView(n); c.addView(d);
+        c.addView(ic); c.addView(n); c.addView(d);
         c.setOnClickListener(v -> {
             if (index == 0) showDetector(); else if (index == 1) showCalibration(); else if (index == 2) showLive();
             else if (index == 3) showArea(); else if (index == 4) showSonar(); else if (index == 5) showBluetooth();
             else if (index == 6) savePoint(); else { hub.zero(); Toast.makeText(this,"Taban sıfırlandı",Toast.LENGTH_SHORT).show(); }
         });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, Utils.dp(this, 120), 1);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, Utils.dp(this, 128), 1);
         lp.setMargins(Utils.dp(this, 4), Utils.dp(this, 5), Utils.dp(this, 4), Utils.dp(this, 5));
         c.setLayoutParams(lp);
         return c;
@@ -154,7 +183,8 @@ public class MainActivity extends Activity implements SensorHub.Listener {
 
     private void showDetector() {
         clear("Dedektör Modu");
-        values = Utils.tv(this, "Bekleniyor...", 16, Utils.txt);
+        values = Utils.tv(this, "Bekleniyor...", 15, Utils.txt);
+        targetGauge = new TargetGaugeView(this);
         columns = new ColumnGraphView(this);
         line = new LineGraphView(this);
         model = new ModelSurfaceView(this);
@@ -169,10 +199,12 @@ public class MainActivity extends Activity implements SensorHub.Listener {
         Button save = Utils.btn(this, "CSV Nokta"); save.setOnClickListener(v -> savePoint());
         actions.addView(zero, new LinearLayout.LayoutParams(0, Utils.dp(this, 58), 1));
         actions.addView(save, new LinearLayout.LayoutParams(0, Utils.dp(this, 58), 1));
+        content.addView(targetGauge, new LinearLayout.LayoutParams(-1, Utils.dp(this, 220)));
         content.addView(values);
-        content.addView(columns, new LinearLayout.LayoutParams(-1, Utils.dp(this, 150)));
-        content.addView(line, new LinearLayout.LayoutParams(-1, Utils.dp(this, 150)));
-        content.addView(model, new LinearLayout.LayoutParams(-1, Utils.dp(this, 320)));
+        content.addView(columns, new LinearLayout.LayoutParams(-1, Utils.dp(this, 132)));
+        content.addView(line, new LinearLayout.LayoutParams(-1, Utils.dp(this, 135)));
+        content.addView(Utils.section(this, "3D Anomali Yüzeyi"));
+        content.addView(model, new LinearLayout.LayoutParams(-1, Utils.dp(this, 280)));
         content.addView(Utils.section(this, "Hassasiyet / alarm eşiği"));
         content.addView(th, new LinearLayout.LayoutParams(-1, Utils.dp(this, 52)));
         content.addView(actions);
@@ -190,15 +222,15 @@ public class MainActivity extends Activity implements SensorHub.Listener {
 
     private void showLive() {
         clear("Live Scan");
-        line = new LineGraphView(this); model = new ModelSurfaceView(this); values = Utils.tv(this, "Canlı izleniyor...", 15, Utils.txt);
-        content.addView(line, new LinearLayout.LayoutParams(-1, Utils.dp(this, 160)));
-        content.addView(model, new LinearLayout.LayoutParams(-1, Utils.dp(this, 500)));
+        line = new LineGraphView(this); model = new ModelSurfaceView(this); values = Utils.tv(this, "Canlı çizgi, 3D yüzey ve anomali takibi aktif.", 15, Utils.txt);
+        content.addView(line, new LinearLayout.LayoutParams(-1, Utils.dp(this, 150)));
+        content.addView(model, new LinearLayout.LayoutParams(-1, Utils.dp(this, 520)));
         content.addView(values);
     }
 
     private void showArea() {
         clear("Area Scan");
-        heat = new HeatMapView(this); values = Utils.tv(this, "Grid noktaları otomatik doluyor. Nokta kaydet ile CSV’ye aktar.", 15, Utils.txt);
+        heat = new HeatMapView(this); values = Utils.tv(this, "Grid noktaları otomatik doluyor. Güçlü bölgeler sarı/kırmızı görünür.", 15, Utils.txt);
         LinearLayout actions = new LinearLayout(this); actions.setOrientation(LinearLayout.HORIZONTAL);
         Button clear = Utils.btn(this, "Temizle"); clear.setOnClickListener(v -> heat.clear());
         Button save = Utils.btn(this, "CSV Nokta"); save.setOnClickListener(v -> savePoint());
@@ -211,9 +243,10 @@ public class MainActivity extends Activity implements SensorHub.Listener {
     private void showSonar() {
         clear("Sonar / 3D");
         sonar = new SonarRadarView(this); model = new ModelSurfaceView(this);
-        content.addView(sonar, new LinearLayout.LayoutParams(-1, Utils.dp(this, 500)));
-        content.addView(model, new LinearLayout.LayoutParams(-1, Utils.dp(this, 360)));
-        content.addView(Utils.tv(this, "Radar halkaları, hedef yankıları ve 3D yüzey görünümü. Eski APK'deki ModelSurfaceView mantığına yakın temiz port.", 14, Utils.muted));
+        content.addView(sonar, new LinearLayout.LayoutParams(-1, Utils.dp(this, 520)));
+        content.addView(Utils.section(this, "3D Yüzey"));
+        content.addView(model, new LinearLayout.LayoutParams(-1, Utils.dp(this, 340)));
+        content.addView(Utils.tv(this, "Radar halkaları, hedef yankıları ve 3D yüzey görünümü v5 ile güçlendirildi.", 14, Utils.muted));
     }
 
     private void showBluetooth() {
@@ -250,11 +283,12 @@ public class MainActivity extends Activity implements SensorHub.Listener {
     }
 
     public void onSensor(float[] m, float[] a, float[] g, float total, float delta) {
-        String s = String.format(Locale.US, "X %.2f  Y %.2f  Z %.2f  |B| %.2f µT  Sapma %.2f µT", m[0], m[1], m[2], total, delta);
+        String s = String.format(Locale.US, "X %.1f  Y %.1f  Z %.1f   |B| %.1f µT   Sapma %.1f µT", m[0], m[1], m[2], total, delta);
         String detail = String.format(Locale.US, "X: %.2f   Y: %.2f   Z: %.2f µT\n|B|: %.2f µT   Sapma: %.2f µT\nAccel: %.1f %.1f %.1f   Gyro: %.2f %.2f %.2f", m[0],m[1],m[2],total,delta,a[0],a[1],a[2],g[0],g[1],g[2]);
         runOnUiThread(() -> {
             sensorBar.setText(s);
             if (values != null) values.setText(detail);
+            if (targetGauge != null) targetGauge.setValues(total, delta);
             if (line != null) line.add(delta);
             if (columns != null) columns.setAxes(m[0], m[1], m[2], delta);
             if (model != null) model.setLevel(delta);

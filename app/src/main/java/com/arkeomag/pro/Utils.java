@@ -59,6 +59,15 @@ public class Utils {
         return l;
     }
 
+    public static LinearLayout miniCard(Context c) {
+        LinearLayout l = new LinearLayout(c);
+        l.setOrientation(LinearLayout.VERTICAL);
+        l.setGravity(Gravity.CENTER);
+        l.setPadding(dp(c, 8), dp(c, 6), dp(c, 8), dp(c, 6));
+        l.setBackground(bgRound(Color.rgb(14, 25, 39), Color.rgb(38, 58, 83), dp(c, 14), 1));
+        return l;
+    }
+
     public static Button btn(Context c, String s) {
         Button b = new Button(c);
         b.setText(s);
