@@ -1,0 +1,2 @@
+package com.lugatek.thubanlodestar.widgets; import android.content.*;import android.util.*;import android.widget.*;
+public class SwipeableButton extends Button{ boolean checked=false; public SwipeableButton(Context c){super(c);setText("Başlat");} public SwipeableButton(Context c,AttributeSet a){super(c,a);setText("Başlat");} public void setChecked(boolean b){checked=b;setText(b?"Durdur":"Başlat");} }
