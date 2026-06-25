@@ -10,7 +10,7 @@ public class FourDView extends View {
     float rot = 0, zoom = 1f, phase = 0;
     ArrayList<Float> frames = new ArrayList<>();
 
-    public FourDView(Context c){ super(c); setBackgroundColor(Color.rgb(5,10,18)); }
+    public FourDView(Context c){ super(c); setBackgroundColor(Color.rgb(4,8,14)); }
 
     public void add(float v){
         frames.add(v);
@@ -43,10 +43,12 @@ public class FourDView extends View {
         return cy + zoom*(yr*.95f - z*2.3f);
     }
 
+    @Override
     protected void onDraw(Canvas c){
         int w=getWidth(),h=getHeight();
+
         p.setStyle(Paint.Style.FILL);
-        p.setColor(Color.rgb(4,9,17));
+        p.setColor(Color.rgb(4,8,14));
         c.drawRect(0,0,w,h,p);
 
         drawHeader(c,w);
@@ -69,6 +71,7 @@ public class FourDView extends View {
         p.setColor(Color.WHITE);
         p.setTextSize(34);
         c.drawText("‹",20,40,p);
+
         p.setTextSize(20);
         c.drawText("4D",70,36,p);
 
@@ -82,6 +85,7 @@ public class FourDView extends View {
         p.setTextSize(17);
         c.drawText("-120",left-55,36,p);
         c.drawText("120",left+320,36,p);
+
         p.setTextSize(30);
         c.drawText("↻",w-95,39,p);
         c.drawText("⋮",w-38,39,p);
@@ -96,8 +100,22 @@ public class FourDView extends View {
             {0,0,-30},{100,0,-30},{100,100,-30},{0,100,-30},
             {0,0,90},{100,0,90},{100,100,90},{0,100,90}
         };
-        int[][] e={{0,1},{1,2},{2,3},{3,0},{4,5},{5,6},{6,7},{7,4},{0,4},{1,5},{2,6},{3,7}};
-        for(int[] a:e)c.drawLine(sx(q[a[0]][0],q[a[0]][1],q[a[0]][2],w,h),sy(q[a[0]][0],q[a[0]][1],q[a[0]][2],w,h),sx(q[a[1]][0],q[a[1]][1],q[a[1]][2],w,h),sy(q[a[1]][0],q[a[1]][1],q[a[1]][2],w,h),p);
+
+        int[][] e={
+            {0,1},{1,2},{2,3},{3,0},
+            {4,5},{5,6},{6,7},{7,4},
+            {0,4},{1,5},{2,6},{3,7}
+        };
+
+        for(int[] a:e){
+            c.drawLine(
+                sx(q[a[0]][0],q[a[0]][1],q[a[0]][2],w,h),
+                sy(q[a[0]][0],q[a[0]][1],q[a[0]][2],w,h),
+                sx(q[a[1]][0],q[a[1]][1],q[a[1]][2],w,h),
+                sy(q[a[1]][0],q[a[1]][1],q[a[1]][2],w,h),
+                p
+            );
+        }
     }
 
     float zval(float x,float y){
@@ -110,9 +128,14 @@ public class FourDView extends View {
 
     void drawSurface(Canvas c,int w,int h){
         p.setStyle(Paint.Style.FILL);
+
         for(int y=0;y<95;y+=5){
             for(int x=0;x<100;x+=5){
-                float z1=zval(x,y), z2=zval(x+5,y), z3=zval(x+5,y+5), z4=zval(x,y+5);
+                float z1=zval(x,y);
+                float z2=zval(x+5,y);
+                float z3=zval(x+5,y+5);
+                float z4=zval(x,y+5);
+
                 Path path=new Path();
                 path.moveTo(sx(x,y,z1,w,h),sy(x,y,z1,w,h));
                 path.lineTo(sx(x+5,y,z2,w,h),sy(x+5,y,z2,w,h));
@@ -128,8 +151,16 @@ public class FourDView extends View {
     }
 
     void drawTargetVolume(Canvas c,int w,int h){
-        float cx=sx(52,54,60,w,h), cy=sy(52,54,60,w,h);
-        RadialGradient g=new RadialGradient(cx-35,cy-45,130,Color.rgb(0,245,255),Color.rgb(0,70,180),Shader.TileMode.CLAMP);
+        float cx=sx(52,54,60,w,h);
+        float cy=sy(52,54,60,w,h);
+
+        RadialGradient g=new RadialGradient(
+            cx-35,cy-45,130,
+            Color.rgb(0,245,255),
+            Color.rgb(0,70,180),
+            Shader.TileMode.CLAMP
+        );
+
         p.setShader(g);
         p.setStyle(Paint.Style.FILL);
         c.drawOval(new RectF(cx-90,cy-125,cx+95,cy+95),p);
@@ -149,9 +180,10 @@ public class FourDView extends View {
         p.setColor(Color.LTGRAY);
         p.setTextSize(18);
         c.drawText("Frame: "+frames.size()+" / 240",24,h-58,p);
-        c.drawText("V3D görünüm: yüzey + izohacim + zaman",24,h-30,p);
+        c.drawText("STAR/V3D görünüm: yüzey + izohacim + zaman",24,h-30,p);
     }
 
+    @Override
     public boolean onTouchEvent(MotionEvent e){
         if(e.getAction()==MotionEvent.ACTION_MOVE){
             rot += e.getX()/getWidth()*0.015f;
