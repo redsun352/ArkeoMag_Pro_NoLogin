@@ -19,6 +19,14 @@ public class FourDView extends View {
         invalidate();
     }
 
+    int heatColor(float v){
+        v=Math.max(0,Math.min(1,v));
+        if(v<0.25f) return Color.rgb(0,70,(int)(120+v*500));
+        if(v<0.50f) return Color.rgb(0,(int)(120+v*220),80);
+        if(v<0.75f) return Color.rgb((int)(v*255),200,0);
+        return Color.rgb(255,(int)(180-(v-0.75f)*500),0);
+    }
+
     protected void onDraw(Canvas c){
         int w=getWidth(), h=getHeight();
         p.setStyle(Paint.Style.FILL);
@@ -38,7 +46,7 @@ public class FourDView extends View {
                 float t=(float)Math.sin((x*0.45f)+(y*0.35f)+phase);
                 float history = frames.size()>0 ? frames.get(frames.size()-1)/35f : 0;
                 float v=Math.max(0,Math.min(1,(t+1)/2f*0.45f+history));
-                p.setColor(Palette.heat(v));
+                p.setColor(heatColor(v));
                 float px=x*cw;
                 float py=70+y*ch-(v*28);
                 c.drawRoundRect(px+2,py+2,px+cw-2,py+ch-2,8,8,p);
