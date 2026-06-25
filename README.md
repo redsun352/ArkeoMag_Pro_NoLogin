@@ -1,3 +1,4 @@
-# ArkeoMag Pro NoLogin v8 Video Edition
+# ArkeoMag Star UI Clone v10
 
-Video akışına göre temiz, girişsiz Android proje: sensör işleme, dedektör, kalibrasyon, grid heatmap, radar, 3D surface, grafik motoru, CSV.
+Aşama 1: star.zip görünümü modern Android uyumlu şekilde yeniden yazıldı.
+Login/Firebase/Play Integrity yoktur.
